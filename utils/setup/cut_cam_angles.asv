@@ -1,0 +1,21 @@
+%cut the camera angles to limit noise/bad angles
+%
+%Note this might affect BRDF in a non-ideal way
+%
+function[cam_angs,lfield,lfield_ground,lfield_clutter] ...
+    = cut_cam_angles(cam_angs,ang_cut,lfield,lfield_ground,lfield_clutter)
+
+num_specs = length(lfield); %number of spectra measurements
+num_ground = length(lfield_ground); %number of ground measurements
+num_clutter = length(lfield_clutter); %number of clutter measurements
+
+cam_angs = cam_angs(ang_cut(1):ang_cut(2)); %update cam angles 
+for ii=1:num_specs
+    lfield{ii} = lfield{ii}(:,ang_cut(1):ang_cut(2));
+end
+for ground_i=1:num_ground
+    lfield_ground{ground_i} = lfield_ground{ground_i}(:,ang_cut(1):ang_cut(2));
+end
+for clutter_i=1:num_clutter
+    lfield_clutter{clutter_i} = lfield_clutter{clutter_i}(:,ang_cut(1):ang_cut(2));
+end

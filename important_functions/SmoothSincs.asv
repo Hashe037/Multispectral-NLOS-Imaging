@@ -1,0 +1,120 @@
+%run a script to smooth Lincs to get more consistent results
+
+%Don't need to do MS-CPA since it 
+
+function[meas_params,results_agnostic,results_precon,results_jade,results_mscpa] ...
+    = SmoothSincs(smooth_param,meas_params,results_agnostic,results_precon,results_jade,results_mscpa)
+
+isvarname(s)
+
+num_ground = length(results_agnostic.Sinc_ground);
+num_specs = length(results_agnostic.Sinc);
+
+%ground truth
+Sinc_ground = results_agnostic.Sinc_ground;
+for i=1:length(Sinc_ground)
+    f = fit((1:length(Sinc_ground{i}))',Sinc_ground{i}','smoothingspline','SmoothingParam',smooth_param);
+    Sinc_ground{i} = f(1:length(Sinc_ground{i}))';
+end
+results_agnostic.Sinc_ground = Sinc_ground;
+
+%regular measurements
+Sinc = results_agnostic.Sinc;
+for i=1:length(Sinc)
+    f = fit((1:length(Sinc{i}))',Sinc{i}','smoothingspline','SmoothingParam',smooth_param);
+    Sinc{i} = f(1:length(Sinc{i}))';
+end
+results_agnostic.Sinc = Sinc;
+
+%single spectra best results
+Sinc_singfilt = results_agnostic.Sinc_singfilt;
+for i=1:length(Sinc_singfilt)
+    f = fit((1:length(Sinc_singfilt{i}))',Sinc_singfilt{i}','smoothingspline','SmoothingParam',smooth_param);
+    Sinc_singfilt{i} = f(1:length(Sinc_singfilt{i}))';
+end
+results_agnostic.Sinc_singfilt = Sinc_singfilt;
+
+%MS-BSS with JADE
+if ~isnan(results_jade)
+    Sinc_jade_best = results_jade.Sinc_jade_best;
+    for i=1:length(Sinc_jade_best)
+        f = fit((1:length(Sinc_jade_best{i}))',Sinc_jade_best{i}','smoothingspline','SmoothingParam',smooth_param);
+        Sinc_jade_best{i} = f(1:length(Sinc_jade_best{i}))';
+    end
+    results_jade.Sinc_jade_best = Sinc_jade_best;
+end
+
+%MS-CPA
+if ~isnan(results_jade)
+    Sinc_jade_best = results_jade.Sinc_jade_best;
+    for i=1:length(Sinc_jade_best)
+        f = fit((1:length(Sinc_jade_best{i}))',Sinc_jade_best{i}','smoothingspline','SmoothingParam',smooth_param);
+        Sinc_jade_best{i} = f(1:length(Sinc_jade_best{i}))';
+    end
+    results_jade.Sinc_jade_best = Sinc_jade_best;
+end
+
+
+
+if ground_one_source
+    for i=1:length(L_inc_onesource)
+        f = fit((1:length(L_inc_onesource{i}))',L_inc_onesource{i}','smoothingspline','SmoothingParam',smooth_param);
+        L_inc_onesource{i} = f(1:length(L_inc_onesource{i}))';
+    end
+end
+
+
+
+if run_nmf
+    for i=1:length(L_inc_nmf_best)
+        f = fit((1:length(L_inc_nmf_best{i}))',L_inc_nmf_best{i}','smoothingspline','SmoothingParam',smooth_param);
+        L_inc_nmf_best{i} = f(1:length(L_inc_nmf_best{i}))';
+    end
+end
+
+if run_mlay
+    for i=1:length(L_inc_mlay_best)
+        f = fit((1:length(L_inc_mlay_best{i}))',L_inc_mlay_best{i}','smoothingspline','SmoothingParam',smooth_param);
+        L_inc_mlay_best{i} = f(1:length(L_inc_mlay_best{i}))';
+    end
+end
+
+if run_sobi
+    for i=1:length(L_inc_sobi_best)
+        f = fit((1:length(L_inc_sobi_best{i}))',L_inc_sobi_best{i}','smoothingspline','SmoothingParam',smooth_param);
+        L_inc_sobi_best{i} = f(1:length(L_inc_sobi_best{i}))';
+    end
+end
+
+
+
+if run_pca
+    for i=1:length(L_inc_pca_best)
+        f = fit((1:length(L_inc_pca_best{i}))',L_inc_pca_best{i}','smoothingspline','SmoothingParam',smooth_param);
+        L_inc_pca_best{i} = f(1:length(L_inc_pca_best{i}))';
+    end
+end
+
+if do_ls
+    for i=1:length(L_inc_ls)
+        f = fit((1:length(L_inc_ls{i}))',L_inc_ls{i}','smoothingspline','SmoothingParam',smooth_param);
+        L_inc_ls{i} = f(1:length(L_inc_ls{i}))';
+    end
+end
+
+if do_precon
+    %have less smoothing for L_inc_precon since it is more sensitive to it
+    linc_smooth_precon = smooth_param*10; %*50
+    for i=1:length(L_inc_precon)
+        f = fit((1:length(L_inc_precon{i}))',L_inc_precon{i},'smoothingspline','SmoothingParam',linc_smooth_precon);
+        L_inc_precon{i} = f(1:length(L_inc_precon{i}));
+    end
+    for i=1:length(L_inc_noprecon)
+        f = fit((1:length(L_inc_noprecon{i}))',L_inc_noprecon{i},'smoothingspline','SmoothingParam',linc_smooth_precon);
+        L_inc_noprecon{i} = f(1:length(L_inc_noprecon{i}));
+    end
+    for i=1:length(L_inc_precon_g)
+        f = fit((1:length(L_inc_precon_g{i}))',L_inc_precon_g{i},'smoothingspline','SmoothingParam',linc_smooth_precon);
+        L_inc_precon_g{i} = f(1:length(L_inc_precon_g{i}));
+    end  
+end

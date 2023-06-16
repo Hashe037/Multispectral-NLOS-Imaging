@@ -1,0 +1,396 @@
+%Code for running experiments where the object is changing intensity with
+%respect to the clutter which is at same intensity. 
+
+%% add paths
+% addpath(genpath('..\auxillary_functions'));
+% addpath(genpath('..\perform_multispec_sigsep'));
+% addpath(genpath('..\scripts'))
+% addpath(genpath('..\..\multispec_work_extra'))
+
+%% File/run information
+% basename =  "D:\OLED_exp_backup\config2_runs\10specs_crat5_flat\";
+
+% basename = "D:\dfov_data\oled_dfov_data\config2_runs\flat\10int_2clut_v2_flat\";
+
+% basename = "D:\dfov_data\oled_dfov_data\config2_runs\satin\manyint_experiments\manyints_2clut2_bettertrack_synth\";
+basename =  "E:\dfov_data\oled_dfov_data\config2_runs\satin\manyint_experiments\10ints_2clut2_bettertrack_v2\";
+
+% basename =  "D:\dfov_data\oled_dfov_data\config2_runs\satin\manyint_experiments\10ints_2clut2_bettertrack_synth\";
+% basename =  "E:\dfov_data\oled_dfov_data\config2_runs\10ints_crat5\";
+% basename =  "D:\dfov_data\oled_dfov_data\new_config_1_test_102022\10ints_config1\";
+% basename =  "D:\dfov_data\oled_dfov_data\new_config_1_test_102022\10ints_config1_synth\";
+% basename =  "D:\dfov_data\oled_dfov_data\new_config_1_test_102022\10_ints_part1\";
+numInts = 10;
+
+run = 1; %for saving multiple runs
+%% Ground information
+ground_params = struct(); %holds information about ground truth
+ground_params.location = strcat(basename,"int_10\ROI_AR_sp1_spots300.csv");
+% ground_params.location = "D:\dfov_data\oled_dfov_data\new_config_1_test_102022\Oct28_wide_obj_medfilt21\ROI_cyl_AR_300.csv";
+ground_params.inten_coeff = 1; %intensity of ground
+% ground_params.occ_cal = 'D:\dfov_data\oled_dfov_data\new_config_1_test_102022\Oct26_test\obj_1_cal\ROI_cyl_AR_300.csv';
+% ground_params.occ_cal = strcat(basename,"int_10\ROI_AR_sp1_spots300.csv");
+ground_params.occ_cal = "E:\dfov_data\oled_dfov_data\config2_runs\satin\manyint_experiments\wideobj_medfilter21x21\ROI_cyl_AR_300.csv"; 
+% ground_params.occ_cal = "D:\dfov_data\oled_dfov_data\new_config_1_test_102022\Oct28_wide_obj_nooccluder_medfilt21\ROI_cyl_AR_300.csv";
+ground_params.single_ground = 0; %whether there is just one ground or allow multiple
+ground_params.single_ground_location = ""; %location of ground file
+%% clutter info
+%real data
+gamma_curve3 = @(x) -8.4e-15*x.^6 + 5.6e-12*x.^5 - 1.5e-09*x.^4 + 2.1e-7*x.^3+4.7e-7*x.^2+.00013*x-.00093;
+
+%sim data
+% gamma_curve3 = @(x) (x/255).^(2.3);
+
+%single clutter
+% ground_params.clutter_location = strcat(basename,"clut_together_maxinten.csv");
+
+%for multiple clutter NEED TO STILL PROPERLY NORMALIZE
+ground_params.clutter_locations = {};
+ground_params.clutter_locations{1} = strcat(basename,"int_10\ROI_AR_sp2_spots300.csv");
+ground_params.clutter_locations{2} = strcat(basename,"int_10\ROI_AR_sp3_spots300.csv");
+clut_spec_file{1} = csvread(strcat(basename,'\clut1_radiance.csv')); %size numSpecs x numInts 
+clut_spec_file{2} = csvread(strcat(basename,'\clut2_radiance.csv')); %size numSpecs x numInts 
+% clut_spec_file{1} = clut_spec_file{1}(5:end,:)'; %skip first four, just take single run
+% clut_spec_file{2} = clut_spec_file{2}(5:end,:)'; %skip first four, just take single run
+% ground_params.clut_rad = findrad_withspecfile(clut_spec_file);
+
+% ground_params.spec_clut(1,:) = clut_spec_file(1,:)'/max(clut_spec_file(:));
+[clutter_rads,clutter_specs] = findSpecWithPixelFile(clut_spec_file,4);
+
+
+%% Experiment Parameters
+% scene_params = struct(); %holds information about the overall setup
+% scene_params.d = 11.03;%(6.6+1.4); %(8.5+1.4)(; %cm; horizontal distance from center of scatterrer to wall
+% scene_params.y_l = 8.05;%6.92; %7.7  cm; vertical distance from center of scatterrer to wall
+% scene_params.d = 8.12;%(6.6+1.4); %(8.5+1.4)(; %cm; horizontal distance from center of scatterrer to wall
+% scene_params.y_l = 6.26;%6.92; %7.7  cm; vertical distance from center of scatterrer to wall
+% scene_params.d = 16.98;%(6.6+1.4); %(8.5+1.4)(; %cm; horizontal distance from center of scatterrer to wall
+% scene_params.y_l = 13.39;%6.92; %7.7  cm; vertical distance from center of scatterrer to wall
+
+%fudge = 0
+scene_params.occ_x = 10.31;%(6.6+1.4); %(8.5+1.4)(; %cm; horizontal distance from center of scatterrer to wall
+scene_params.occ_y = 8.05;%6.92; %7.7  cm; vertical distance from center of scatterrer to wall
+% scene_params.d = 12.27;%(6.6+1.4); %(8.5+1.4)(; %cm; horizontal distance from center of scatterrer to wall
+% scene_params.y_l = 9.43;%6.92; %7.7  cm; vertical distance from center of scatterrer to wall
+
+
+
+%fudge = -2
+% scene_params.d = 9.39;%(6.6+1.4); %(8.5+1.4)(; %cm; horizontal distance from center of scatterrer to wall
+% scene_params.y_l = 6.17;%6.92; %7.7  cm; vertical distance from center of scatterrer to wall
+
+%fudge = 2
+% scene_params.d = 10.24;%(6.6+1.4); %(8.5+1.4)(; %cm; horizontal distance from center of scatterrer to wall
+% scene_params.y_l = 6.17;%6.92; %7.7  cm; vertical distance from center of scatterrer to wall
+
+% %fudge = 5
+% scene_params.d = 10.24;%(6.6+1.4); %(8.5+1.4)(; %cm; horizontal distance from center of scatterrer to wall
+% scene_params.y_l = 6.17;%6.92; %7.7  cm; vertical distance from center of scatterrer to wall
+
+scene_params.angle_fudge = 0; %fudge factor to add to angles due to misalignment issues
+scene_params.cam_angs = (0:1:70)+scene_params.angle_fudge; %camera angles used in light field
+scene_params.ang_cut = [2,71]; %min/max angle index to analyze
+scene_params.vant_cut = [10,300];%10; %min/max vant index to analyze
+scene_params.num_specs = 5; %number of spectra analyzed
+scene_params.back_sig = 0; %noise floor
+scene_params.cam_dist = 10.25*2.54; %cm, distance from sample to lens
+scene_params.cam_fov = 9.7; %cm, fov of camera
+scene_params.num_vants = 300; %number of spatial vantages
+scene_params.vant_pos_all = ...
+    (linspace(1024-950,1024+950,scene_params.num_vants)-1024)/2048*scene_params.cam_fov; %cm, vant positions
+scene_params.account_responsivity = 0; %account for spectral responsivity of camera or not
+
+brdf_params = struct(); %holds information about the BRDF and light field
+brdf_params.brdf_location = "C:\Users\hashe037\Desktop\DARPA_REVEAL\multispec_work_simplest\calibration_data\brdf.mat"; %brdf location
+brdf_params.vector_num = 3; %number of vectors to use for SVD
+% brdf_params.ground_svd = brdf_params.vector_num; %max number of SVD vectors to use for the ground
+brdf_params.vectors_remove = []; %vectors to remove because troublesome
+
+recon_params = struct(); %holds information about the DFOV algorithm
+recon_params.dis_method = "residnorm"; %distance metric to use for reconstruction
+recon_params.att_dist = 1; %distance to start attenuation results linearly (1 means no attenuation)
+recon_params.smooth_lincs = 0; %smooth the resulting lincs or not
+recon_params.lincs_smooth_param = .005; %smooth the resulting lincs or not
+recon_params.abs_lincs = 0; %take absolute value of lincs or not
+recon_params.alpha_smooth = .1;%.00001;%.001; %parameter to smooth alpha
+recon_params.do_optprecon = 0 ; %whether to perform optimized preconditioning or not
+
+
+msbss_params = struct(); %holds information about the BSS algorithms
+% msbss_params.bss_vector_num = 3; %how many vectors to use for BSS
+msbss_params.nmf_type = [0,1,0]; %[run_sequence,multi_layer,second_order], all 0 means run normal NMF
+msbss_params.nmf_guess = 0; %whether to input the "guess" to NMF or not
+msbss_params.nmf_smooth = 0; %whether to smooth NMF results or not
+msbss_params.nmf_options = statset('maxiter',1000,'display','off','TolFun',1e-7,'TolX',1e-7);
+msbss_params.nmf_alg = "mult"; %which nmf algorithm to use
+msbss_params.nmf_rep = 1; %how many replications of NMF to do (if not guessing)
+msbss_params.numcomp = 4; %number of components for BSS
+% msbss_params.clutter_removal = "pow"; %"dist" %how to discern what is clutter element
+msbss_params.clutter_removal = "dist"; %%how to discern what is clutter element
+msbss_params.num_clutter = 2; %how many clutter objects to remove (loops this many times)
+msbss_params.precon = 'dalpha'; %what preconditioning to use
+%NOTE: NEED TO APPLY CLUT REMOVAL TO ANY DIST METHOD STILL
+
+mscpa_params = struct(); %holds information about the MS-DFOV algorithm
+mscpa_params.runRelaxation = 2; %whether to run MS-DFOV relaxation or what form of it. 0 is do not run
+mscpa_params.msdfov_vector_num = 3; %number of SVD vectors to use
+mscpa_params.K = 2; %expected number of clutter elements to decide nullspace size
+mscpa_params.dis_method = 'residnorm_reconweighted'; %which distance metric to use
+% mscpa_params.dis_method = 'residnorm_measweighted'; %which distance metric to use
+mscpa_params.msdfov_specs = 1:5; %2:4; %number of spectra to use
+mscpa_params.spec_choice = 1; %what spec (if method==0)
+mscpa_params.spec_choice_method = 0; %how to choose spec for algorithm (0 for predetermined, 1 for min)
+mscpa_params.do_diff = 0; %whether to perform with differential or dalpha (0 for dalpha)
+mscpa_params.linc_msdfov_smooth = .01; %.01 %smoothing on Linc
+mscpa_params.attenuate_ondist = 1; %whether to attenuate Linc w.r.t. distance metric
+mscpa_params.nullsize_method = 0; %how to determine the nullsize of the CP algorithm
+mscpa_params.nullcut = .05; %if method = 0, the percentage of power to consider
+
+
+lsrecon_params = struct(); %holds information about the LS reconstruction
+lsrecon_params.sing_angle = 50; %single angle to analyze for LS (if not average) (accounts for ang_min_cut)
+lsrecon_params.average_singang = 0; %whether to average or not (0 or 1)
+lsrecon_params.ls_ground = 0; %whether to reconstruct all with LS or with dfov (0 or 1)
+% lsrecon_params.precon_svd = 150; %truncation to use for precon
+lsrecon_params.w = 1e-3; %value to multiply precon
+
+%% define the different folder locations for each run
+% gamma_curve = @(x) -1.6e-10*x.^4 + 8.5e-8*x.^3+3.4e-6*x.^2+.00017*x-.0024;
+% gamma_curve2 = @(x) (x/255).^(2.3);
+% gamma_curve3 = @(x) -8.4e-15*x.^6 + 5.6e-12*x.^5 - 1.5e-09*x.^4 + 2.1e-7*x.^3+4.7e-7*x.^2+.00013*x-.00093;
+
+%load in object radiance values
+obj_rad = csvread(strcat(basename,"obj_radiance.csv")); %radiance of objects in size numSpecs x numInts
+numInts = size(obj_rad,2);
+
+%define object spectrums
+all_obj_specs = [];
+for i=1:size(obj_rad,2) %each int
+    for j=5:size(obj_rad,1) %each spectrum value
+        if obj_rad(j,i) < 40 %for small values, use gamma_curve2
+            all_obj_specs(i,j-4) = gamma_curve3(obj_rad(j,i)); %skip first value
+        else %use more accurate curve
+            all_obj_specs(i,j-4) = gamma_curve3(obj_rad(j,i)); %skip first value
+        end
+    end
+%   all_obj_specs(i,:) = gamma_curve(obj_rad(5:end,i)); %skip first value
+end
+max_obj_spec_val = max(all_obj_specs(:)); %maximum intensity value of spec
+
+%find intensity list
+inten_list = [];
+for i=1:size(obj_rad,2) %each int
+    inten_list(i) = 0;
+    for j=5:size(obj_rad,1) %each spectrum value
+        if obj_rad(j,i) < 40 %for small values, use gamma_curve2
+            inten_list(i) = inten_list(i) + gamma_curve3(obj_rad(j,i)); %skip first value
+        else %use more accurate curve
+            inten_list(i) = inten_list(i) + gamma_curve3(obj_rad(j,i)); %skip first value
+        end
+    end
+%   inten_list(i) = sum(gamma_curve(obj_rad(5:end,i))); %sum across each spectra value
+end
+inten_list = inten_list/max(inten_list); %normalize
+
+%find filenames
+folder_names = [""];
+for i=1:length(inten_list)
+    folder_names(end+1) = strcat(basename,"int_",num2str(i));
+end
+folder_names = folder_names(2:end);
+
+filenames = ["ROI_AR_sp4_spots300.csv","ROI_AR_sp5_spots300.csv","ROI_AR_sp6_spots300.csv","ROI_AR_sp7_spots300.csv","ROI_AR_sp8_spots300.csv"];
+% filenames = ["ROI_AR_sp5_spots300.csv","ROI_AR_sp6_spots300.csv","ROI_AR_sp8_spots300.csv","ROI_AR_sp7_spots300.csv","ROI_AR_sp4_spots300.csv"];
+% filenames = ["light_fields\ROI_AR_sp4_spots300.csv","light_fields\ROI_AR_sp5_spots300.csv","light_fields\ROI_AR_sp6_spots300.csv","light_fields\ROI_AR_sp7_spots300.csv","light_fields\ROI_AR_sp8_spots300.csv"];
+
+% filenames = ["ROI_AR_sp8_spots300.csv","ROI_AR_sp7_spots300.csv","ROI_AR_sp6_spots300.csv","ROI_AR_sp5_spots300.csv","ROI_AR_sp4_spots300.csv"];
+
+%load in relevant data and spectrums
+lfield_locations_list = {};
+obj_spectrums = [];
+for folder_ind=1:length(folder_names)
+    folder = folder_names(folder_ind);
+
+    %normalize to max value (intuitive)
+    obj_spectrums(folder_ind,:) = all_obj_specs(folder_ind,:)/max(all_obj_specs(folder_ind,:)); %spectrum
+    
+    %normalize to last value (what was run in config_2)
+    obj_spectrums(folder_ind,:) = all_obj_specs(folder_ind,:)...
+        ./repmat(all_obj_specs(folder_ind,end),1,size(all_obj_specs,2)); %spectrum
+
+    obj_intens(folder_ind) = inten_list(folder_ind); %obj intensity
+    inten_coeffs(folder_ind) = inten_list(folder_ind);%max(obj_spec_file)/max(obj_spec_file_max); %obj inten_coeff
+    obj_power(folder_ind) = norm(all_obj_specs(folder_ind,:)); %power of object
+    lfield_locations_list{folder_ind} = [""];
+    for filename_ind =1:length(filenames)
+        filename = filenames(filename_ind);
+        lfield_locations_list{folder_ind}(filename_ind) = strcat(folder,'\',filename);
+    end
+end
+
+%% debug mode (if stop is put into code)
+do_debug=1; 
+if do_debug
+    for exp_ind = 3
+        %some extra info
+%         ground_params.inten_coeff = inten_coeffs(exp_ind);
+%         ground_params.spec_ground = obj_spectrums(exp_ind,:);
+        
+        ground_params.ground_locations = strcat(basename,"int_",num2str(exp_ind),"\ROI_AR_sp1_spots300.csv");
+        ground_params.spec_ground = obj_spectrums(exp_ind,:);
+
+        if iscell(clutter_specs)
+            for clutter_i = 1:length(clutter_specs)
+                ground_params.spec_clut(clutter_i,:) = clutter_specs{clutter_i}(exp_ind,:);
+            end
+        else %single clut
+            ground_params.spec_clut(1,:) = clutter_specs(exp_ind,:);
+        end
+
+        all_params = struct();
+        all_params.scene_params = scene_params;
+        all_params.brdf_params = brdf_params;
+        all_params.recon_params = recon_params;
+        all_params.mscpa_params = mscpa_params;
+        all_params.msbss_params = msbss_params;
+        all_params.lsrecon_params = lsrecon_params;
+        all_params.ground_params = ground_params;
+
+        %run
+        [recmet_results{exp_ind},distance_results{exp_ind},predmet_results{exp_ind},spec_results{exp_ind}, ...
+            ldif_results{exp_ind},L_inc_results{exp_ind},separated_results{exp_ind},vars_dict{exp_ind}] ...
+            = run_multispec_signalsep(all_params, lfield_locations_list{exp_ind});
+        fprintf('Debug done\n')
+    end
+end
+
+%% run over all files
+recmet_results = {}; %reconstruction metrics
+distance_results = {}; %distances in dfovs
+predmet_results = {}; %preresultsive metrics 
+spec_results = {}; %specular metrics/info
+ldif_results = {}; %difference in light fields
+L_inc_results = {}; %reconstructions
+separated_results = {}; %separated light fields and dalphas
+vars_dict = {}; %important variables
+
+all_t = 0; %total time
+for exp_ind = 1:length(lfield_locations_list)
+    %some extra info
+%     ground_params.inten_coeff = inten_coeffs(exp_ind);
+%     ground_params.spec_ground = obj_spectrums(exp_ind,:);
+    
+    ground_params.location = strcat(basename,"int_",num2str(exp_ind),"\ROI_AR_sp1_spots300.csv");
+    ground_params.inten_coeff = 1;
+    ground_params.spec_ground = obj_spectrums(exp_ind,:);
+
+    if iscell(clutter_specs)
+        for clutter_i = 1:length(clutter_specs)
+            ground_params.spec_clut(clutter_i,:) = clutter_specs{clutter_i}(exp_ind,:);
+        end
+    else %single clut
+        ground_params.spec_clut(1,:) = clutter_specs(exp_ind,:);
+    end
+
+    %make all_params structure
+    all_params = struct();
+    all_params.scene_params = scene_params;
+    all_params.brdf_params = brdf_params;
+    all_params.recon_params = recon_params;
+    all_params.msbss_params = msbss_params;
+    all_params.mscpa_params = mscpa_params;
+    all_params.lsrecon_params = lsrecon_params;
+    all_params.ground_params = ground_params;
+
+    %run
+    tic
+    [recmet_results{exp_ind},distance_results{exp_ind},predmet_results{exp_ind},spec_results{exp_ind}, ...
+        ldif_results{exp_ind},L_inc_results{exp_ind},separated_results{exp_ind},vars_dict{exp_ind}] ...
+        = run_multispec_signalsep(all_params, lfield_locations_list{exp_ind});
+    t=toc;
+    all_t = all_t+t;
+    fprintf('Run %i done with time elapsed %.2f secs \n',exp_ind,t)
+end
+fprintf('All runs complete with total time taken of %.2f seconds \n',all_t)
+beep
+
+%% load data across all the runs
+
+[recmet_all,distance_all,predmet_all,spec_all,ldif_all,L_inc_all,separated_all]...
+    = load_across_runs(recmet_results,distance_results,predmet_results,spec_results,ldif_results,L_inc_results,separated_results);
+
+L_inc_all_norm = normalize_linc_struct(L_inc_all);
+
+% total_ls = return_results_from_dict(recmet_results,fields);
+
+%% show results
+%make an entry "nan" if you do not want to show it
+
+recmet_all.total.shape.spat = nan;
+recmet_all.total.shape.cp = nan;
+recmet_all.total.shape.nmf = nan;
+recmet_all.total.shape.ls = nan;
+
+recmet_all.total.shape.sobi = nan;
+recmet_all.total.shape.mlay = nan;
+recmet_all.total.shape.pca = nan;
+
+recmet_all.total.shape.precon = nan;
+recmet_all.total.shape.noprecon = nan;
+% plot_struct_fields(recmet_all.total.shape,nan,1,'Shape Error vs Object Intensity','Run Number','Log Shape Error')
+% plot_struct_fields(recmet_all.total.shape,1./predmet_all.pow_rat,1,'Shape Error vs Object Intensity','Ratio of Average Object-to-Clutter Energy in Light Field','Log Shape Error')
+% plot_struct_fields(recmet_all.total.shape,inten_coeffs,1,'Shape Error vs Object Intensity','Object/Max Object Intensity','Log Shape Error')
+% plot_struct_fields(recmet_all.total.shape,log10(predmet_all.cond_num2_norm),1,'Shape Error vs Condition Number','Log of Condition Number','Log Shape Error')
+plot_struct_fields(recmet_all.total.shape,log10(predmet_all.pow_rat),1,'Shape Error vs SCR','Log of SBR','Log Shape Error')
+grid on
+xlim([1.2,3.5])
+ylim([-5.2,-2.5])
+
+recmet_all.total.powdif.ls = nan;
+recmet_all.total.powdif.spat = nan;
+recmet_all.total.powdif.cp = nan;
+% plot_struct_fields(recmet_all.total.powdif,nan,0,'PowerDif vs Object Intensity','Run Number','Power Dif')
+% plot_struct_fields(recmet_all.total.powdif,inten_coeffs,0,'PowerDif vs Object Intensity','Object/Max Object Intensity','Power Dif')
+% plot_struct_fields(recmet_all.total.powdif,1./predmet_all.pow_rat,0,'PowerDif vs Object Intensity','Ratio of Average Object-to-Clutter Energy in Light Field','Log Shape Error')
+
+%specs
+spec_all.specdif.spat = nan;
+spec_all.specdif.cp = nan;
+spec_all.specdif.pca = nan;
+% plot_struct_fields(spec_all.specdif,nan,0,'SpecDif vs Object Intensity','Run Number','Spec Dif')
+% plot_struct_fields(spec_all.specdif,inten_coeffs,0,'SpecDif vs Object Intensity','Object/Max Object Intensity','Spec Dif')
+
+%msdfov distance
+% figure,plot(distance_all.msdfov_dist','Linewidth',2),title('MS-DFOV Distance')
+% xlabel('Vantage'),ylabel('Distance'),legend()
+
+%Lincs
+ints_toshow = [1,5,9];
+% L_inc_all_norm.total.pca = nan;
+L_inc_all_norm.total.cp = nan;
+L_inc_all_norm.total.clutter = nan;
+L_inc_all_norm.total.ls = nan;
+L_inc_all_norm.total.nmf = nan;
+% L_inc_all_norm.total.sobi = nan;
+L_inc_all_norm.total.spatial = nan;
+
+L_inc_all_norm.total.sobi = nan;
+L_inc_all_norm.total.mlay = nan;
+L_inc_all_norm.total.pca = nan;
+plot_struct_fields_lincs(L_inc_all_norm.total,vars_dict{1}.inc_angles,[-64,-31],inten_list,ints_toshow, ...
+    'Normalized Linc','Incident Angle','Recovered Radiance')
+
+% L_inc_all.total.pca = nan;
+L_inc_all.total.cp = nan;
+L_inc_all.total.ls = nan;
+% L_inc_all.total.sobi = nan;
+L_inc_all.total.spatial = nan;
+% plot_struct_fields_lincs(L_inc_all.total,vars_dict{1}.inc_angles,[-64,-31],inten_list,ints_toshow, ...
+%     'Linc','Incident Angle','Recovered Radiance')
+
+
+
+
+
+
+

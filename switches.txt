@@ -1,0 +1,45 @@
+Switches
+
+L -- cam_dist
+dfov_params -- recon_params
+bss_params -- msbss_params
+msdfov_params -- mscpa_params
+ls_params -- lsrecon_params
+c_fov -- cam_fov
+ang_min/max_cut -- ang_cut (array)
+vant_min/max_cut -- vant_cut (array)
+d -- occ_x
+y_l -- occ_y
+numSpecs -- num_specs
+%%%%%%%%%%%%%vant_pos -- xi_pos
+to_remove -- vectors_remove
+ang_range -- brdf_scat_range
+back -- back_sig
+l_field -- lfield
+l_field_ground -- lfield_ground
+l_field_clutter -- lfield_clutter
+inten_coeff -- gone?
+ground_params.location -- ground_params.ground_locations
+ground_params.clutter_location -- ground_params.clutter_locations
+numAngs -- num_angs
+numVants -- num_vants
+true_vant_pos -- vant_pos_all
+true_cam_angles -- cam_angs_all
+cam_angles -- cam_angs
+true_vant_angs -- vant_angs_all
+true_vant_brdf -- vant_brdf_all
+beta_inc -- s_inc
+dalpha_smooth -- alpha_smooth (also move to recon_params)
+L_inc -- Sinc
+L_inc_dw -- Sinc_vant
+dfov_dis_method = dis_method
+inc_angles_up -- brdf_inc_angs_up
+ground_params.one_source = single_ground;
+ground_one_source = single_ground
+obj_spec -- spec_ground
+clut_spec -- spec_clut
+
+flipping dist so that dist comes first (same with spec)
+FLIPPING BRDF so that it is scat_angles x inc_angles
+SWITCHING U AND Vs
+Dalpha is now numVants x numVectors

@@ -1,0 +1,156 @@
+%run preconditioning with clutter known ahead of time in script form so
+%that the variables are already loaded in
+
+function[Sinc_precon,Sinc_precon_clut,Sinc_precon_ground,lfield_precon,lfield_precon_clut]
+
+
+%% beginning params
+do_diff = 1; %take differential
+numcomp = 150; %number of components for svd regularization
+
+%define weights for clutter matrix
+w = lsrecon_params.w;
+
+%find background
+B_mat = construct_background(lfield_clutter,w,do_diff);
+% B_mat(B_mat<1e-4)=0; %set values to 0 to prevent errors
+
+%find forward model
+[A_3d,A_2d] = find_precon_forward_mod(do_diff,r_params);
+% overlap = subspace(A_2d,B_mat);
+% overlap = rad2deg(overlap);
+A_precon = horzcat(A_2d,B_mat);
+
+%confine to CFOV region
+% cfov_parts = [53,99]; %31
+% A_2d(:,1:(cfov_parts(1)-1)) = zeros(size(A_2d(:,1:(cfov_parts(1)-1))));
+% A_2d(:,(cfov_parts(2)+1):end) = zeros(size(A_2d(:,(cfov_parts(2)+1):end)));
+
+%truncate forward models (SVD)
+[A_precon_t,S_precon] = trunc_forwardmod(A_precon,numcomp);
+% [A_2d_t,S_2d] = trunc_forwardmod(A_2d,numcomp);
+[A_2d_t,S_2d] = trunc_forwardmod(A_2d,numcomp);
+% A_2d(:,1:55) = 0;
+
+% A_2d_t = A_2d; %temporary measure
+
+% A_precon = A_precon(:,1:end-length(l_field_clutter));
+% A_precon_t = A_precon_t(:,1:end-length(l_field_clutter));
+
+% figure, imagesc(pinv(A_precon))
+Ainv_precon = pinv(A_precon);
+Ainv_precon(:,1:55) = 0;
+Ainv_precon = Ainv_precon(1:end-length(l_field_clutter),:);
+% figure,imagesc(Ainv_precon)
+%% find ground truth
+L_inc_precon_g = {};
+l_field_precon_g = {};
+for obj_ind=1:length(l_field_ground)
+    lfield_mod = l_field_ground{obj_ind};
+    if do_diff
+%         lfield_mod = diff(lfield_mod,1);
+        lfield_mod = smoothdata(diff(lfield_mod,1),1);
+    end
+    lfield_mod = reshape(lfield_mod,numel(lfield_mod),1);
+%     L_inc_precon_g{obj_ind} = -1*pinv(A_2d_t)*lfield_mod;
+    L_inc_precon_g{obj_ind} = -1*pinv(A_2d)*lfield_mod;
+    l_field_precon_g{obj_ind} = -1 * reshape((A_2d * L_inc_precon_g{obj_ind}),size(l_field{1},1)-do_diff,size(l_field{1},2)); 
+end
+L_inc_precon_g_all = sum_cell(L_inc_precon_g);
+
+%one ground
+if ground_one_source
+    for spec=1:length(l_field)
+        lfield_mod = l_field_onesource{spec};
+        if do_diff
+    %         lfield_mod = diff(lfield_mod,1);
+            lfield_mod = smoothdata(diff(lfield_mod,1),1);
+        end
+        lfield_mod = reshape(lfield_mod,numel(lfield_mod),1);
+        L_inc_precon_onesource{spec} = -1*pinv(A_2d)*lfield_mod;
+    end
+end
+
+%% perform for clutter measurements
+L_inc_precon_clut = {};
+l_field_precon_clut = {};
+for clut_ind=1:length(l_field_clutter)
+    lfield_mod = l_field_clutter{clut_ind};
+
+    %lfield_mod = lfield_mod+imnoise(lfield_mod,'gaussian',0,10);
+
+    %60db means noise should be about 1000th of the signal
+    lfield_mod = lfield_mod+3*randn(size(lfield_mod));
+
+    % figure,imagesc(lfield_mod)
+    if do_diff
+%         lfield_mod = diff(lfield_mod,1);
+        lfield_mod = smoothdata(diff(lfield_mod,1),1);
+    end
+    lfield_mod = reshape(lfield_mod,numel(lfield_mod),1);
+%     L_inc_precon_g{obj_ind} = -1*pinv(A_2d_t)*lfield_mod;
+    L_inc_precon_clut{clut_ind} = -1*Ainv_precon*lfield_mod;
+    l_field_precon_clut{clut_ind} = -1 * reshape((A_2d * L_inc_precon_clut{clut_ind}),size(l_field{1},1)-do_diff,size(l_field{1},2)); 
+    l_field_precon_clut{clut_ind} = replace_zeros_fromabove(l_field_precon_clut{clut_ind});
+end
+
+%% perform for each spectral measurement
+L_inc_precon = {};
+l_field_precon = {};
+for spec=1:length(l_field)
+    lfield_mod = l_field{spec};
+    if do_diff
+%         lfield_mod = diff(lfield_mod,1);
+        lfield_mod = smoothdata(diff(lfield_mod,1),1);
+    end
+    lfield_mod = reshape(lfield_mod,numel(lfield_mod),1);
+%     L_inc_noprecon{spec} = -1*pinv(A_2d_t)*lfield_mod;
+%     L_inc_precon{spec} = -1*pinv(A_precon_t)*lfield_mod;
+    L_inc_noprecon{spec} = -1*pinv(A_2d)*lfield_mod;
+%     L_inc_precon{spec} = -1*pinv(A_precon)*lfield_mod;
+    L_inc_precon{spec} = -1*Ainv_precon*lfield_mod;
+    l_field_precon{spec} = reshape((A_2d * L_inc_precon{spec}),size(l_field{1},1)-do_diff,size(l_field{1},2)); 
+    l_field_precon{spec} = replace_zeros_fromabove(l_field_precon{spec});
+    % l_field_precon{spec}(l_field_precon{spec}==0) = nan;
+    % l_field_precon{spec} = replace_image_nans(l_field_precon{spec});
+    
+    l_field_noprecon{spec} = reshape((A_2d * L_inc_noprecon{spec}),size(l_field{1},1)-do_diff,size(l_field{1},2)); 
+%     L_inc_precon{spec} = L_inc_precon{spec}(1:end-length(l_field_clutter));
+end
+
+spec_sample = 1;
+
+% figure,plot(sum_cell(L_inc_precon))
+% figure,plot(L_inc_precon_g_all),xlim([0,200]),title('Ground')
+% figure,plot(L_inc_noprecon{spec_sample}),xlim([0,200]),title('Normal')
+% figure,plot(L_inc_precon{spec_sample}),xlim([0,200]),title('Precon')
+
+%% smooth results
+smooth_precon = 0; %whether to smooth results across vantages
+dw_smooth = msdfov_params.linc_msdfov_smooth*50;
+if smooth_precon 
+    for spec_c = 1:length(L_inc_precon)
+        f = fit((1:length(L_inc_precon{spec_c}))',L_inc_precon{spec_c},'smoothingspline','SmoothingParam',dw_smooth);
+        L_inc_precon{spec_c} = f(1:length(L_inc_precon{spec_c}));
+
+        f = fit((1:length(L_inc_noprecon{spec_c}))',L_inc_noprecon{spec_c},'smoothingspline','SmoothingParam',dw_smooth);
+        L_inc_noprecon{spec_c} = f(1:length(L_inc_noprecon{spec_c}));
+    end
+end
+
+%% smooth lfields
+smooth_lfield_precon = 1; %whether to smooth results across vantages
+dw_smooth = .8; %.1
+ang_smooth = .5; %.1
+if smooth_lfield_precon 
+    for spec_c = 1:length(l_field_precon)
+        for i=1:size(l_field_precon{spec_c},2)
+            f = fit((1:size(l_field_precon{spec_c},1))', l_field_precon{spec_c}(:,i),'smoothingspline','SmoothingParam',ang_smooth);
+            l_field_precon{spec_c}(:,i) = f(1:size(l_field_precon{spec_c},1));
+        end
+        for i=1:size(l_field_precon{spec_c},1)
+            f = fit((1:size(l_field_precon{spec_c},2))', l_field_precon{spec_c}(i,:)','smoothingspline','SmoothingParam',dw_smooth);
+            l_field_precon{spec_c}(i,:) = f(1:size(l_field_precon{spec_c},2));
+        end
+    end
+end

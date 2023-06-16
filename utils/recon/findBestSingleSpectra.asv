@@ -1,0 +1,21 @@
+%Find single spectral measurement that lends the smallest reconstruction
+%residual
+
+function[Sinc_vant_singfilt,Sinc_singfilt,bestspec] ...
+    = findBestSingleSpectra(Sinc,Sinc_vant,dist_recon)
+
+dist_recon_list = [];
+for i=1:length(dist_recon)
+    dist_recon_list(i) = sum(dist_recon{i});
+end
+[~,bestspec] = min(dist_recon_list); %minimum residual
+
+%make same size as others
+Sinc_singfilt = {};
+Sinc_vant_singfilt = {};
+for i=1
+
+Sinc_vant_singfilt = Sinc_vant{bestspec};
+Sinc_singfilt = Sinc{bestspec};
+
+

@@ -1,0 +1,81 @@
+% This code is an implementation of the lfield reconstruction outlined in 
+% "Passive non-line-of-sight imaging using plenoptic information" (Optics
+% Express 2020). Essentially, it can be thought of as a least-squares
+% solution for each spectral measurement:
+%         Sinc = argmin_{s} || dalpha_occ*s - dalpha_meas||_2^2
+% This is very similar to other passive NLOS imaging methods such as
+% "Computational periscopy with an ordinary digital camera" (Nature 2019).
+% However, it is specialized to light fields in that 1) it uses the
+% preconditioner dalpha instead of the entire light field and 2) it treats
+% each change in vantage indepedently and therefore can be parallelized.
+% When comparing this result to the Nature 2019 result (without TV
+% denoising), it is very similar.
+%
+%--------------------------------------------------------------------------
+% Inputs
+% - dalpha -- preconditioned light field measurements to reconstruct from
+% - recon_params.dalpha_occ -- expected scattering structure from occluder (similar to
+% the forward model of the hidden scene)
+% - scene_params/brdf_params/recon_params -- structures which hold useful
+% parameters
+%
+%--------------------------------------------------------------------------
+% Outputs
+% Sinc_vant -- incoming radiance based on vantage (change in angle in change of vantage)
+% Sinc -- radiance based on incident angles
+% dist -- distance in projection operation (residual in reconstruction
+%
+%
+function[Sinc_vant,Sinc,dist] = performLfieldRecon(dalpha,scene_params,brdf_params,recon_params)
+
+
+brdf_inc_angs_up = brdf_params.brdf_inc_angs_up;
+vant_pos = scene_params.vant_pos;
+occ_x = scene_params.occ_x;
+occ_y = scene_params.occ_y;
+dis_method = recon_params.dis_method;
+dalpha_occ = recon_params.dalpha_occ;
+
+if iscell(dalpha) %if its a cell, process all light fields (multispectral
+    num_elements = length(dalpha);
+
+    Sinc_vant = {}; %derived Linc based on dw (change in angle)
+    Sinc = {}; %derived Linc based on angles
+    dist = {}; %distance in projection
+
+    for ii=1:num_elements
+        [Sinc_vant{ii},dist{ii}] = dalpha_to_Sinc_vant(dalpha{ii},dalpha_occ); %perform "inversion" for each vantage
+        Sinc{ii} = incvant_to_incang(Sinc_vant{ii},brdf_inc_angs_up,vant_pos,occ_x,occ_y); %convert to angles
+    end
+
+    %update distance based on distance metric
+    dist{ii} = update_recon_dist(dist{ii},dis_method,Sinc_vant{ii},dalpha{ii},dalpha_occ);
+    
+else %single dalpha (not cell)
+    Sinc_vant = []; %derived Linc based on dw (change in angle)
+    Sinc = []; %derived Linc based on angles
+    dist = []; %distance in projection
+    
+    [Sinc_vant,dist] = dalpha_to_Sinc_vant(dalpha,dalpha_occ); %perform "inversion" for each vantage
+    Sinc = incvant_to_incang(Sinc_vant,brdf_inc_angs_up,vant_pos,occ_x,occ_y); %convert to angles
+
+    %update distance based on distance metric
+    dist = update_recon_dist(dist,dis_method,Sinc_vant,dalpha,dalpha_occ);
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
