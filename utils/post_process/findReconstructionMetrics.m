@@ -30,11 +30,29 @@ recmet_dict.total.powdif = struct(); %difference in "power" where power is defin
 
 %% upsample Sincls (later is redundant)
 if do_precon
-    num_vants_precon = length(results_precon.Sinc_precon{1}); %total incident divisions
-
     Sinc_precon_up = results_precon.Sinc_precon_up;
     Sinc_noprecon_up = results_precon.Sinc_noprecon_up;
     Sinc_precon_ground_up = results_precon.Sinc_precon_ground_up;
+
+    num_vants_precon = length(results_precon.Sinc_precon{1}); %total incident divisions
+    % 
+    % Sinc_precon_up = {};
+    % Sinc_noprecon_up = {};
+    % num_vants_precon = length(Sinc_precon{1});
+    % for spec_c = 1:length(Sinc_precon)
+    %     Sinc_precon_up{spec_c} = interp1(Sinc_precon{spec_c}, linspace(1,num_vants_precon,num_vants));
+    %     Sinc_noprecon_up{spec_c} = interp1(Sinc_noprecon{spec_c}, linspace(1,num_vants_precon,num_vants));
+    % end
+
+    % for ground_i = 1:length(Sinc_precon_ground)
+    %     Sinc_precon_ground_up{ground_i} = interp1(Sinc_precon_ground{ground_i}.*sum(meas_params.spec_ground(ground_i,:)), linspace(1,num_vants_precon,num_vants));
+    % end
+
+    %add onto results precon
+    % results_precon.Sinc_precon_up = Sinc_precon_up;
+    % results_precon.Sinc_noprecon_up = Sinc_precon_up;
+    % results_precon.Sinc_precon_up = Sinc_precon_up;
+
 end
 % if do_precon
 %     Sinc_precon_up = {};
@@ -97,13 +115,13 @@ for ground_i=1:num_ground
     %remember, solving this in slightly different way so we need to
     %reconstruct it differently as well
     if do_precon        
-        recmet_dict.each.mse.precon(ground_i) = nansum((sum_cell(Sinc_precon_up)*coeff_multiple-Sinc_precon_ground_up).^2)/num_vants;
-        recmet_dict.each.shape.precon(ground_i) = nansum((sum_cell(Sinc_precon_up)/norm(sum_cell(Sinc_precon_up))-Sinc_precon_ground_up/norm(Sinc_precon_ground_up)).^2)/num_vants;
-        recmet_dict.each.powdif.precon(ground_i) = power_diff(sum_cell(Sinc_precon_up)*coeff_multiple,Sinc_precon_ground_up);
+        recmet_dict.each.mse.precon(ground_i) = nansum((sum_cell(Sinc_precon_up)*coeff_multiple-Sinc_precon_ground_up{ground_i}).^2)/num_vants;
+        recmet_dict.each.shape.precon(ground_i) = nansum((sum_cell(Sinc_precon_up)/norm(sum_cell(Sinc_precon_up))-Sinc_precon_ground_up{ground_i}/norm(Sinc_precon_ground_up{ground_i})).^2)/num_vants;
+        recmet_dict.each.powdif.precon(ground_i) = power_diff(sum_cell(Sinc_precon_up)*coeff_multiple,Sinc_precon_ground_up{ground_i});
 
-        recmet_dict.each.mse.noprecon(ground_i) = nansum((sum_cell(Sinc_noprecon_up)*coeff_multiple-Sinc_precon_ground_up).^2)/num_vants;
-        recmet_dict.each.shape.noprecon(ground_i) = nansum((sum_cell(Sinc_noprecon_up)/norm(sum_cell(Sinc_noprecon_up))-Sinc_precon_ground_up/norm(Sinc_precon_ground_up)).^2)/num_vants;
-        recmet_dict.each.powdif.noprecon(ground_i) = power_diff(sum_cell(Sinc_noprecon_up)*coeff_multiple,Sinc_precon_ground_up);
+        recmet_dict.each.mse.noprecon(ground_i) = nansum((sum_cell(Sinc_noprecon_up)*coeff_multiple-Sinc_precon_ground_up{ground_i}).^2)/num_vants;
+        recmet_dict.each.shape.noprecon(ground_i) = nansum((sum_cell(Sinc_noprecon_up)/norm(sum_cell(Sinc_noprecon_up))-Sinc_precon_ground_up{ground_i}/norm(Sinc_precon_ground_up{ground_i})).^2)/num_vants;
+        recmet_dict.each.powdif.noprecon(ground_i) = power_diff(sum_cell(Sinc_noprecon_up)*coeff_multiple,Sinc_precon_ground_up{ground_i});
 
     else
         recmet_dict.each.mse.precon(ground_i) = nan; 
@@ -208,17 +226,24 @@ end
 %special error for single spectra filtered
 act_specs = [];
 Sinc_singfilt = results_agnostic.Sinc_singfilt;
-% for i=1:length(Sinc_vant_singfilt)
-%     if abs(Sinc_vant_singfilt{i}) ~= 0
-%         act_specs(i) = 1;
-%     else
-%         act_specs(i) = 0;
-%     end
-% end
+Sinc_vant_singfilt = results_agnostic.Sinc_vant_singfilt;
+for i=1:length(Sinc_vant_singfilt)
+    if abs(Sinc_vant_singfilt{i}) ~= 0
+        act_specs(i) = 1;
+    else
+        act_specs(i) = 0;
+    end
+end
 
-recmet_dict.total.mse.singfilt = nansum((-sum_cell(Sinc_singfilt)+Sinc_ground_tot).^2)/num_vants;
-recmet_dict.total.shape.singfilt = nansum((-sum_cell(Sinc_singfilt)/norm(sum_cell(Sinc_singfilt))+Sinc_ground_tot/norm(Sinc_ground_tot)).^2)/num_vants;
-recmet_dict.total.powdif.singfilt = power_diff(sum_cell(Sinc_singfilt),Sinc_ground_tot);
+if ground_params.single_ground
+    Sinc_ground_tot2 = sum_cell(results_agnostic.Sinc_sing_ground,act_specs);
+else
+    Sinc_ground_tot2 = sum_cell(results_agnostic.Sinc_ground,sum(spec_ground,2));
+end
+
+recmet_dict.total.mse.singfilt = nansum((-sum_cell(Sinc_singfilt)+Sinc_ground_tot2).^2)/num_vants;
+recmet_dict.total.shape.singfilt = nansum((-sum_cell(Sinc_singfilt)/norm(sum_cell(Sinc_singfilt))+Sinc_ground_tot2/norm(Sinc_ground_tot2)).^2)/num_vants;
+recmet_dict.total.powdif.singfilt = power_diff(sum_cell(Sinc_singfilt),Sinc_ground_tot2);
 
 
 

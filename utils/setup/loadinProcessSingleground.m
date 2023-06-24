@@ -6,11 +6,11 @@ for spec=1:scene_params.num_specs
     lfield_sing_ground{spec} = csvread(strcat(ground_params.single_ground_location,"\light_fields\lfield_",num2str(spec),".csv"))-scene_params.back_sig;
 end   
 
-%account for spectral responsivity
-if scene_params.account_responsivity
-    [lfield_sing_ground,~,~] ...
-        = accountForResponsivity(lfield_sing_ground,meas_params.spec_ground,meas_params.spec_clutter,scene_params);
-end
+%account for spectral responsivity %ALREADY DONE LATER
+% if scene_params.account_responsivity
+%     [lfield_sing_ground,~,~] ...
+%         = accountForResponsivity(lfield_sing_ground,meas_params.spec_ground,meas_params.spec_clutter,scene_params);
+% end
 
 %cut the light field as same as before
 [~,lfield_sing_ground,~,~] ...

@@ -30,7 +30,6 @@ if ground_params.single_ground
 end
 
 %% find Sinc using the CPA algorithm
-
 spec_choice = mscpa_params.spec_choice; %what spec to choose as base (if method==0)
 spec_choice_method = mscpa_params.spec_choice_method; %how to choose base spec for algorithm
 msdfov_do_diff = mscpa_params.do_diff; %whether to perform with differential or dalpha
@@ -51,9 +50,6 @@ if spec_choice_method == 1 %find spec that minimizes MS-CPA distance (best fits 
             perform_cpa_reconstruction(gamma_cfov,scene_params,brdf_params,meas_params,...
             recon_params,mscpa_params,spec_choice,mscpa_params.dis_method,mscpa_params.do_diff);
     
-%     figure,plot(L_inc_msdfov_dw),title('Lincdw')
-%     figure,plot(msdfov_dist),title('Dist')
-%     figure,plot(msdfov_extra_info.null_size),title('Null Size')
 elseif spec_choice_method == 2 %weighted measurements according to distance
     error('Need to still do \n')
 else %prechosen spec

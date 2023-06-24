@@ -10,7 +10,7 @@ addpath(genpath('..\..\important_functions'))
 basefolder = dir('..\..\').folder;
 expfolder = strcat(basefolder,"\calibration_and_data\real_singleobj_satinsurface\"); 
 
-obj_color = "green"; %can be blue, red, or green
+obj_color = "blue"; %can be blue, red, or green
 ground_params = struct(); %holds information about ground truth
 
 if strcmp(obj_color,"blue")

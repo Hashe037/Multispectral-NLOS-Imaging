@@ -223,7 +223,7 @@ end
 Sinc_smooth = recon_params.Sinc_smooth_param;%.1; %smoothing factor
 if recon_params.smooth_Sincs
     [meas_params,results_agnostic,results_precon,results_jade,results_mscpa] ...
-        = SmoothSincs(Sinc_smooth,meas_params,results_agnostic,results_precon,results_jade,results_mscpa);
+        = SmoothSincs(Sinc_smooth,meas_params,lsrecon_params,results_agnostic,results_precon,results_jade,results_mscpa);
 end
 
 %take absolute value of Sincs (helps account for flipping)

@@ -51,3 +51,4 @@ mscpa_params.do_diff = 0; %whether to perform with differential or dalpha (0 for
 
 lsrecon_params = struct(); %holds information about the LS reconstruction
 lsrecon_params.w = 7.25e9; %1e-3%value to multiply precon
+% lsrecon_params.precon_smooth = .025; %smoothing for preconditioning (needs less than spectral methods)

@@ -30,7 +30,6 @@ lfield_sing_ground = meas_params.lfield_sing_ground;
 
 %% beginning params
 do_diff = 1; %take differential when performing opt precon (recommended)
-%numcomp = 150; %number of components for svd regularization
 
 %define weights for clutter matrix
 w = lsrecon_params.w;
@@ -41,8 +40,6 @@ B_mat = construct_background(lfield_clutter,w,do_diff);
 
 %% find forward model and optimized preconditioner
 [~,A_2d] = find_precon_forward_mod(do_diff,scene_params,brdf_params);
-% overlap = subspace(A_2d,B_mat); %overlap to gauge effectiveness of opt precon
-% overlap = rad2deg(overlap); %overlap to gauge effectiveness of opt precon
 A_precon = horzcat(A_2d,B_mat);
 
 %perform inversion of forward model
@@ -104,8 +101,8 @@ lfield_precon = {};
 for spec=1:length(lfield)
     lfield_mod = lfield{spec};
     if do_diff
-%         lfield_mod = diff(lfield_mod,1);
-        lfield_mod = smoothdata(diff(lfield_mod,1),1);
+        lfield_mod = diff(lfield_mod,1);
+        % lfield_mod = smoothdata(diff(lfield_mod,1),1);
     end
     lfield_mod = reshape(lfield_mod,numel(lfield_mod),1);
     Sinc_noprecon{spec} = -1*pinv(A_2d)*lfield_mod;
@@ -150,7 +147,7 @@ for spec_c = 1:length(Sinc_precon)
 end
 
 for ground_i = 1:length(Sinc_precon_ground)
-    Sinc_precon_ground_up = interp1(Sinc_precon_ground{ground_i}.*sum(meas_params.spec_ground(ground_i,:)), linspace(1,num_vants_precon,num_vants));
+    Sinc_precon_ground_up{ground_i} = interp1(Sinc_precon_ground{ground_i}.*sum(meas_params.spec_ground(ground_i,:)), linspace(1,num_vants_precon,num_vants));
 end
 
 %% create precon results structure

@@ -29,8 +29,8 @@ recon_params.att_dist = 1; %distance to start attenuation results linearly (1 me
 recon_params.smooth_Sincs = 1; %smooth the resulting lincs or not
 recon_params.Sinc_smooth_param = .0025; %.005 %smooth the resulting lincs or not
 recon_params.abs_Sincs = 0; %take absolute value of lincs or not
-recon_params.alpha_smooth = .1;%.1; %parameter to smooth dalpha
-recon_params.do_optprecon = .05;
+recon_params.alpha_smooth = .05;%.1; %parameter to smooth dalpha
+recon_params.do_optprecon = 1;
 
 msbss_params = struct(); %holds information about the BSS algorithms
 msbss_params.numcomp = 4; %5 %number of components for BSS
@@ -55,3 +55,4 @@ mscpa_params.mscpa_vectors_remove = [4];
 
 lsrecon_params = struct(); %holds information about the LS reconstruction
 lsrecon_params.w = 7.25e9;%1e-1; %1e-1%value to multiply precon
+% lsrecon_params.precon_smooth = .00025; %smoothing for preconditioning

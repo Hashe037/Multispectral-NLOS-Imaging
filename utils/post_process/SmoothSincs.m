@@ -5,7 +5,7 @@
 %needs harsher smoothing).
 
 function[meas_params,results_agnostic,results_precon,results_jade,results_mscpa] ...
-    = SmoothSincs(smooth_param,meas_params,results_agnostic,results_precon,results_jade,results_mscpa)
+    = SmoothSincs(smooth_param,meas_params,lsrecon_params,results_agnostic,results_precon,results_jade,results_mscpa)
 
 num_ground = length(results_agnostic.Sinc_ground);
 num_specs = length(results_agnostic.Sinc);
@@ -64,7 +64,11 @@ end
 %if doing optimization preconditioning
 if isfield(results_precon,'Sinc_precon')
     %have less smoothing for L_inc_precon since it is more sensitive to it
-    smooth_param_precon = smooth_param*10; %*50
+    if isfield(lsrecon_params,'precon_smooth')
+        smooth_param_precon = lsrecon_params.precon_smooth;
+    else
+        smooth_param_precon = smooth_param*10; %*50
+    end
     Sinc_precon = results_precon.Sinc_precon;
     Sinc_noprecon = results_precon.Sinc_noprecon;
     Sinc_precon_ground = results_precon.Sinc_precon_ground;
@@ -80,7 +84,28 @@ if isfield(results_precon,'Sinc_precon')
         f = fit((1:length(Sinc_precon_ground{i}))',Sinc_precon_ground{i},'smoothingspline','SmoothingParam',smooth_param_precon);
         Sinc_precon_ground{i} = f(1:length(Sinc_precon_ground{i}));
     end  
+
     results_precon.Sinc_precon = Sinc_precon;
     results_precon.Sinc_noprecon = Sinc_noprecon;
     results_precon.Sinc_precon_ground = Sinc_precon_ground;
+
+    %upsample Sinc and save the smoothed versions
+    Sinc_precon_up = {};
+    Sinc_noprecon_up = {};
+    num_vants_precon = length(Sinc_precon{1});
+    num_vants = length(Sinc_ground{1});
+    for spec_c = 1:length(Sinc_precon)
+        Sinc_precon_up{spec_c} = interp1(Sinc_precon{spec_c}, linspace(1,num_vants_precon,num_vants));
+        Sinc_noprecon_up{spec_c} = interp1(Sinc_noprecon{spec_c}, linspace(1,num_vants_precon,num_vants));
+    end
+    
+    for ground_i = 1:length(Sinc_precon_ground)
+        Sinc_precon_ground_up{ground_i} = interp1(Sinc_precon_ground{ground_i}.*sum(meas_params.spec_ground(ground_i,:)), linspace(1,num_vants_precon,num_vants));
+    end
+    results_precon.Sinc_precon_up = Sinc_precon_up;
+    results_precon.Sinc_noprecon_up = Sinc_noprecon_up;
+    results_precon.Sinc_precon_ground_up = Sinc_precon_ground_up;
+
+
+
 end
