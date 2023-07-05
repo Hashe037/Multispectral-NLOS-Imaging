@@ -1,3 +1,31 @@
+% Perform NLOS imaging reconstruction using spectral-agnostic
+% reconstruction. In this work, we focus on a method which uses the light
+% field from "Passive non-line-of-sight imaging using plenoptic
+% information" (JOSA A, 2020). This method is very similar to other
+% LS-based methods as "Computational periscopy with an ordinary digital
+% camera" (Nature 2019). It finds the hidden incident scene "x" such that
+%
+% x = argmin_x ||Ax - y||^2
+%
+% Where A is the forward model and y is the measurements. In addition, both
+% A and y have SVD truncation in the scattering angle dimension (similar to
+% what is used as the preconditioner in Section 4.2 of the paper). Lastly,
+% each change in vantage is assumed to be independent of each other
+% (similar to the splitting of the mixture in MS-CPA in Section 5.2 of the
+% paper). This affects the construction of the forward model A
+%
+%
+%--------------------------------------------------------------------------
+% Outputs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% results_agnostic -- structure that contains valuable reconstruction
+% elements
+%--------------------------------------------------------------------------
+
+
+
+
+
+
 function[results_agnostic] = ...
     performAgnosticRecons(scene_params,brdf_params,meas_params,ground_params,recon_params)
 

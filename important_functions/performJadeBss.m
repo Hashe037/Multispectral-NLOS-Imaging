@@ -1,5 +1,3 @@
-% COMMENT FURTHER
-% 
 %This code implements a pipeline that peforms blind source separation (BSS)
 %of multispectral light fields using an indepdendent component analysis
 %(ICA) method called Joint Approximate Diagonalization of Eigenmatrices 
@@ -14,6 +12,13 @@
 % 2. Perform unmixing with JADE algorithm
 % 3. Find which components have highest reconstruction residual and remove
 % them
+%
+%Unlike the paper, in this code we determine clutter elements by a
+%fixed-amount ahead of time, so the "x" amount of elements with the
+%highest distance are removed. This is slightly different from the paper
+%which sets a threshold in Section 4.4. In practice, the threshold can be
+%set and determined, but for easy replicability and debugging we chose this
+%method.
 %
 %--------------------------------------------------------------------------
 % Outputs (inputted in structure) -----------------------------------------

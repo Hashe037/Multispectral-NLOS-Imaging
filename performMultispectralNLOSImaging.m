@@ -4,7 +4,9 @@
 %variables. It is meant to be called upon separately after the variables
 %have been set.
 %
-%Make sure proper 
+%The endgoal of this function is to unmix the light fields given by
+%"lfield_locations" into a collection of hidden scene sources. 
+%
 %--------------------------------------------------------------------------
 % Inputs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % - all_params -- struct that holds more structs, each which contain
@@ -27,21 +29,16 @@
 % Outputs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % All outputs are dictionaries which contain the results for each method
 % - Sinc_dict -- reconstruction results (in radiance vs incident angle)
-% - reconmet_dict -- reconstruction metrics results
-% - distance_dict -- reconstruction distance/residuals
+% - recmet_dict -- reconstruction metrics results
+% - dist_dict -- reconstruction distance/residuals
 % - separated_dict -- contains some useful examples to visualize how each
 % BSS method is unmixing the light field
-% - predictmet_dict -- metrics which try to predict how hard the unmixing is
+% - predmet_dict -- metrics which try to predict how hard the unmixing is
 % - vars_dict -- important variables
 
 
 function[recmet_dict,dist_dict,predmet_dict,Sinc_dict,separated_dict,vars_dict] = ...
     performMultispectralNLOSImaging(all_params, lfield_locations)
-
-%% add important paths
-% addpath(genpath('C:\Users\hashe037\Desktop\DARPA_REVEAL\multispec_work\auxillary_functions'));
-% addpath(genpath('C:\Users\hashe037\Desktop\DARPA_REVEAL\multispec_work\perform_multispec_sigsep'));
-% addpath(genpath('C:\Users\hashe037\Desktop\DARPA_REVEAL\multispec_work\scripts'))
 
 
 %% expand all_params
@@ -53,6 +50,8 @@ mscpa_params = all_params.mscpa_params;
 lsrecon_params = all_params.lsrecon_params;
 ground_params = all_params.ground_params;
 meas_params = struct();
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

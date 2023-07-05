@@ -1,6 +1,34 @@
-% MAKE COMMENTS
+% This code performs MS-CPA as defined in Section 5 of the paper. Unlike
+% MS-BSS which assumes no prior knowledge of the hidden scene, MS-CPA
+% assumes we know or have an estimate of the color of the CFOV objects.
+% This allows for a faster and more accurate algorithm that can perform
+% with a fewer number of required spectral filters.
 %
-%run MS-DFOV in script form to put variables to workspace
+%
+% There are several algorithmic details that were not mentioned in the
+% paper:
+% - We use the resulting distance "z_*" in the final optimization step of MS-CPA
+% in Eq. 20 to attenuate the reconstruction results for the partical vantage.
+% If this distance is large, this meansthat MS-CPA optimization was 
+% likely affected by noise or poor assumptions and therefore we should not
+% trust this measuremetns.
+% - In the paper we mentioned that any reweighted filter measurement can be
+% used to construct the set "B" since they all contain the true CFOV partition
+% measurement. In practice, some filter measurements are better than others
+% since the clutter might be weak in certain measurements. Therefore we
+% actually run the algorithm multiple times to see which measurement lends
+% the minimum distance residual "z_*" in Eq. 20 and use that for the entire
+% reconstruction.
+% - To solve the convex optimization in Eq. 18, we need to calculate the
+% nullspace of Bv (hence the projection operator P in Eq. 19). Numerically,
+% this can be difficult in the presence of noise, and changes based on how
+% many clutter objects are affecting the given vantage measurement. We set
+% a threshold to take the certain amount of SVD vectors which contained
+% "x"% of the total energy of the Bv matrix (typically choise 95%). The rest
+% of the SVD vectors were designated as the nullspace.
+
+
+
 
 function[results_mscpa] = performMscpa(ground_params,scene_params,brdf_params,meas_params,recon_params,mscpa_params,results_agnostic)
 
