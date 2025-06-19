@@ -9,7 +9,7 @@ Image Processing Toolbox <br>
 Statistics and Machine Learning Toolbox <br>
 
 ## Contact
-Please contact the main author (Connor Hashemi) through email at hashe037@umn.edu for any questions or comments.
+Please contact the main author (Connor Hashemi) through email at connor.hashemi1995@gmail.com for any questions or comments.
 
 ## Citation
 If using the code, please use the following citation: <br>
